@@ -13,6 +13,7 @@ import org.springframework.aop.Pointcut;
 import org.springframework.aop.framework.DefaultAdvisorChainFactory;
 import org.springframework.aop.framework.ProxyFactory;
 import org.springframework.aop.support.DefaultPointcutAdvisor;
+import org.springframework.aop.support.NameMatchMethodPointcut;
 
 import java.lang.reflect.Method;
 
@@ -48,7 +49,7 @@ public class AdvisorTest {
 
     }
 
-    class MyPointcut implements Pointcut {
+    static class MyPointcut implements Pointcut {
 
         @Override
         public ClassFilter getClassFilter() {
@@ -61,7 +62,7 @@ public class AdvisorTest {
         }
     }
 
-    class MyMethodMatcher implements MethodMatcher {
+    static class MyMethodMatcher implements MethodMatcher {
 
         private String matchName = "save";
 
@@ -82,6 +83,25 @@ public class AdvisorTest {
         public boolean matches(Method method, Class<?> targetClass, Object... args) {
             return false;
         }
+    }
+
+    @Test
+    @DisplayName("스프링이 제공하는 PointCut")
+    public void advisorTest3() {
+        ServiceInterface target = new ServiceImpl();
+        ProxyFactory proxyFactory = new ProxyFactory(target);
+
+        NameMatchMethodPointcut nameMatchMethodPointcut = new NameMatchMethodPointcut();
+        nameMatchMethodPointcut.setMappedNames("find", "save");
+        log.info("{}", nameMatchMethodPointcut.getMethodMatcher());
+
+        DefaultPointcutAdvisor advisor = new DefaultPointcutAdvisor(nameMatchMethodPointcut, new TimeAdvice());
+
+        proxyFactory.addAdvisor(advisor);
+        ServiceInterface proxy = (ServiceInterface) proxyFactory.getProxy();
+        proxy.find();
+        proxy.save();
+
     }
 
 }
